@@ -1,5 +1,7 @@
 require 'rspec'
 require_relative 'Task_List_challenge'
+require 'date'
+require 'time'
 
 
 describe "Task" do
@@ -39,6 +41,9 @@ describe "Task" do
         task_two = Task.new("Task two")
         our_task_list.add_task(task_two)
         expect(our_task_list.task_array[1].title).to eq("Task two")
+        due_date_task_one = DueDateTask.new("4-15-2018", "Task 3")
+        our_task_list.add_task(due_date_task_one)
+        expect(our_task_list.task_array[2].title).to eq("Task 3")
     end
 end
 describe "Task list" do
@@ -57,12 +62,86 @@ describe "Task list" do
         expect(task_list.task_retrieve(true)).to match_array([task_one, task_three])
         expect(task_list.task_retrieve(false)).to match_array([task_two, task_four])
     end
+
+    it "can show non-completed tasks that are due today" do
+        t_list1 = TaskList.new
+        task_one = Task.new("Task one")
+        task_two = Task.new("Task two")
+        t_list1.add_task(task_one)
+        t_list1.add_task(task_two)
+        task_one.switch_done
+        ddtask_one = DueDateTask.new("10-20-2019", "2019 Task")
+        t_list1.add_task(ddtask_one)
+        ddtask_two = DueDateTask.new("10-20-2017", "Done already")
+        ddtask_two.switch_done
+        ddtask_three = DueDateTask.new("10-27-2017", "Due today not done")
+        ddtask_four = DueDateTask.new("10-27-2017", "Due today done")
+        ddtask_four.switch_done
+        t_list1.add_task(ddtask_three)
+        t_list1.add_task(ddtask_four)
+        # expect(t_list1.task_retrieve(false).has_todays_date).to eq([ddtask_three])
+        t_list1.task_retrieve(false)
+        p t_list1.result_array
+        expect(t_list1.has_todays_date).to match_array([ddtask_three])
+    end
+
+    it "can list all the not completed items in order of due date." do
+        t_list1 = TaskList.new
+        task_one = Task.new("Task one")
+        task_two = Task.new("Task two")
+        t_list1.add_task(task_one)
+        t_list1.add_task(task_two)
+        task_one.switch_done
+        ddtask_one = DueDateTask.new("10-20-2019", "2019 Task")
+        t_list1.add_task(ddtask_one)
+        ddtask_two = DueDateTask.new("10-20-2017", "Done already")
+        ddtask_two.switch_done
+        ddtask_three = DueDateTask.new("10-27-2017", "Due today not done")
+        ddtask_four = DueDateTask.new("10-27-2017", "Due today done")
+        ddtask_four.switch_done
+        ddtask_five = DueDateTask.new("12-20-2017", "Due in December")
+        t_list1.add_task(ddtask_five)
+        ddtask_six = DueDateTask.new("10-15-2017", "Due last week, not done")
+        t_list1.add_task(ddtask_three)
+        t_list1.add_task(ddtask_four)
+        t_list1.add_task(ddtask_six)
+        t_list1.task_retrieve(false)
+        expect(t_list1.sortdd).to match_array([ddtask_six, ddtask_three, ddtask_five, ddtask_one])
+    end
+    it "can list all the not completed items in order of due date, and then the items without due dates" do
+        t_list1 = TaskList.new
+        task_one = Task.new("Task one")
+        task_two = Task.new("Task two")
+        task_banana = Task.new("Task banana")
+        t_list1.add_task(task_one)
+        task_one.switch_done
+        ddtask_one = DueDateTask.new("10-20-2019", "2019 Task")
+        t_list1.add_task(ddtask_one)
+        t_list1.add_task(task_banana)
+        ddtask_two = DueDateTask.new("10-20-2017", "Done already")
+        ddtask_two.switch_done
+        ddtask_three = DueDateTask.new("10-27-2017", "Due today not done")
+        ddtask_four = DueDateTask.new("10-27-2017", "Due today done")
+        ddtask_four.switch_done
+        ddtask_five = DueDateTask.new("12-20-2017", "Due in December")
+        t_list1.add_task(ddtask_five)
+        ddtask_six = DueDateTask.new("10-15-2017", "Due last week, not done")
+        t_list1.add_task(ddtask_three)
+        t_list1.add_task(ddtask_four)
+        t_list1.add_task(ddtask_six)
+        t_list1.task_retrieve(false)
+        expect(t_list1.sort_both).to match_array([ddtask_six, ddtask_three, ddtask_five, ddtask_one, task_banana])
+    end
 end
 describe "Due date task" do
     it "is a Task with a due date" do
         expect{DueDateTask.new}.to_not raise_error
-        due_date_task_one = DueDateTask.new('2017-10-27')
-        expect((due_date_task_one).class.superclass).to eq(Task)
-        expect(due_date_task_one.due_date).to eq("2017-10-27")
+        due_date_task_one = DueDateTask.new
+        expect(due_date_task_one.due_date).to eq((Date.today+7))
+        due_date_task_two = DueDateTask.new('1-20-2018')
+        expect((due_date_task_two).class.superclass).to eq(Task)
+        expect(due_date_task_two.due_date).to eq("1-20-2018")
+        due_date_task_one.add_label("This is a label.")
+        expect(due_date_task_one.label).to eq("This is a label.")
     end
 end
